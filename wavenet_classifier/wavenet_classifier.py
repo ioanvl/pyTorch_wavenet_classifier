@@ -31,6 +31,8 @@ class wave_net(nn.Module):
         :param density: How many blocks of the -same- kernel will be created, practically a multiplier on the above number
         :param drop: Dropout used, after the dilated blocks, fed on the last two conv layers
         :param debug: Perform a mock pass and print on init
+
+
         """
         super().__init__()
         self.num_time_samples = num_time_samples
@@ -53,7 +55,7 @@ class wave_net(nn.Module):
         self.file_path = f"{__file__}"
 
         print(f"\nIn_channels = {self.num_in_channels}\nHidden = {self.num_hidden}\n")
-        self.conv_init = nn.Conv1d(self.num_in_channels, self.num_hidden, 1)    # create channels that the blocks are going to use
+        self.conv_init = nn.Conv1d(self.num_in_channels, self.num_hidden, 1)    # create channels the blocks are going to use
 
         wbs = []
         for i in range(num_kernels):
@@ -83,6 +85,9 @@ class wave_net(nn.Module):
 
     def forward(self, x):
         x = self.conv_init(x)
+        """
+        Input goes through a conv layer with kernel size 1 to create the number of hidden channels
+        """
         
         block_skips = []
         for block in self.wbs:
@@ -90,6 +95,10 @@ class wave_net(nn.Module):
             block_skips.append(block_out)
 
         x = reduce((lambda a, b: torch.cat((a, b), 1)), block_skips)
+
+        """
+        Passing the input through each block in parallel and the outputs are concatenated
+        """
 
         x = self.drop(self.conv_1_1(self.activ_1(x)))
         x = self.conv_1_2(self.activ_2(x))
@@ -126,6 +135,11 @@ class wave_block (nn.Module):
         print(f"Block kernel size: {self.kernel_size}: {counter-1} layers reading {self.kernel_size**(counter-1)} elements")
 
         self.num_layers = counter - 1
+
+        """
+        We create enough layers to 'consume'/concentrate the information on the first X values on the top layer
+        where X is no shorter than the biggest kernel - but also as short as we can make it
+        """
 
         hs = []
         batch_norms = []
