@@ -17,6 +17,21 @@ class wave_net(nn.Module):
                  drop=20,
                  debug=False,
                  ):
+        """
+        
+        :param num_time_samples: The expected length of the 1-d input n x c n L
+        :param num_in_channels: Num# of input channels n x C x l
+        :param num_hidden: Num# of forward channels through the dilated net
+        :param num_out_features: Num# of channels used for output features, after the dilated net
+        :param num_classes: Num# of sample/dataset classes, practically final output width
+        :param kernel_size: Size of the 1st(see bellow) kernel used throught the dilated net
+        :param num_kernels: How many blocks, with kernels all differing by +1, will be created
+                            e.g kernel_size=2, num_kernels=3 will create 3 dilated blocks, with kernel sizes
+                            2, 3 and 4, fed with the same input, and their outpus concatenated
+        :param density: How many blocks of the -same- kernel will be created, practically a multiplier on the above number
+        :param drop: Dropout used, after the dilated blocks, fed on the last two conv layers
+        :param debug: Perform a mock pass and print on init
+        """
         super().__init__()
         self.num_time_samples = num_time_samples
         self.num_in_channels = num_in_channels
